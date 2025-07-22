@@ -6,7 +6,7 @@ Currently supported, maintained and updated versions:
 
 | Version | Supported          | Support Status |
 | ------- | ------------------ | -------------- |
-| 4.x     | :white_check_mark: | Active Development & Security Updates |
+| 4.x     | :white_check_mark: | Active Dev elopment & Security Updates |
 | < 4.0   | :x:                | End of Life (no security updates) |
 
 ## Security Updates
