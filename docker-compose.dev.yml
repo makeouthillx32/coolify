@@ -1,7 +1,7 @@
 services:
   coolify:
     build:
-      context: .
+      context: https://github.com/makeouthillx32/coolify.git#v4.x
       dockerfile: ./docker/development/Dockerfile
       args:
         - USER_ID=${USERID:-1000}
@@ -18,13 +18,15 @@ services:
       PUSHER_APP_KEY: "${PUSHER_APP_KEY:-coolify}"
       PUSHER_APP_SECRET: "${PUSHER_APP_SECRET:-coolify}"
     volumes:
-      - .:/var/www/html/:cached
+      - dev_coolify_data:/data/coolify
       - dev_backups_data:/var/www/html/storage/app/backups
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - coolify
     depends_on:
       - postgres
       - redis
+    restart: unless-stopped
       
   postgres:
     image: postgres:15-alpine
@@ -41,6 +43,7 @@ services:
       - dev_postgres_data:/var/lib/postgresql/data
     networks:
       - coolify
+    restart: unless-stopped
       
   redis:
     image: redis:7-alpine
@@ -55,27 +58,25 @@ services:
       - dev_redis_data:/data
     networks:
       - coolify
+    restart: unless-stopped
       
   soketi:
     build:
-      context: .
+      context: https://github.com/makeouthillx32/coolify.git#v4.x
       dockerfile: ./docker/coolify-realtime/Dockerfile
     env_file:
       - .env
     ports:
       - "6002:6001"  # Maps to your preferred 6002 port
       - "6003:6002"  # Terminal server port
-    volumes:
-      - ./storage:/var/www/html/storage
-      - ./docker/coolify-realtime/terminal-server.js:/terminal/terminal-server.js
     environment:
       SOKETI_DEBUG: "false"
       SOKETI_DEFAULT_APP_ID: "${PUSHER_APP_ID:-coolify}"
       SOKETI_DEFAULT_APP_KEY: "${PUSHER_APP_KEY:-coolify}"
       SOKETI_DEFAULT_APP_SECRET: "${PUSHER_APP_SECRET:-coolify}"
-    entrypoint: ["/bin/sh", "/soketi-entrypoint.sh"]
     networks:
       - coolify
+    restart: unless-stopped
       
   vite:
     image: node:20-alpine
@@ -94,7 +95,7 @@ services:
       
   testing-host:
     build:
-      context: .
+      context: https://github.com/makeouthillx32/coolify.git#v4.x
       dockerfile: ./docker/testing-host/Dockerfile
     init: true
     container_name: coolify-testing-host
@@ -107,6 +108,7 @@ services:
       - dev_minio_data:/data/coolify/_volumes/minio
     networks:
       - coolify
+    restart: unless-stopped
       
   mailpit:
     image: axllent/mailpit:latest
@@ -117,6 +119,7 @@ services:
       - "8026:8025"    # Your preferred external port
     networks:
       - coolify
+    restart: unless-stopped
       
   minio:
     image: minio/minio:latest
@@ -133,6 +136,7 @@ services:
       - dev_minio_data:/data
     networks:
       - coolify
+    restart: unless-stopped
 
 volumes:
   dev_backups_data:
