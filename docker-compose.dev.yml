@@ -21,6 +21,7 @@ services:
       - dev_coolify_data:/data/coolify
       - dev_backups_data:/var/www/html/storage/app/backups
       - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /var/www/html
     networks:
       - coolify
     depends_on:
