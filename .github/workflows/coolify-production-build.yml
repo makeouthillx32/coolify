@@ -55,19 +55,18 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
-          shell: powershell
           script_stop: true
           script: |
-            Write-Host "📁 Switching to project directory..."
-            Set-Location "D:\\code\\coolify"
+            echo 📁 Switching to project directory...
+            cd /d "D:\code\coolify"
 
-            Write-Host "🔐 Logging into GHCR..."
-            docker login ghcr.io -u makeouthillx32 -p '${{ secrets.GHCR_TOKEN }}'
+            echo 🔐 Logging into GHCR...
+            docker login ghcr.io -u makeouthillx32 -p ${{ secrets.GHCR_TOKEN }}
 
-            Write-Host "📥 Pulling updated image..."
+            echo 📥 Pulling updated image...
             docker-compose -f docker-compose.dev.yml pull coolify
 
-            Write-Host "🔁 Recreating container..."
+            echo 🔁 Recreating container...
             docker-compose -f docker-compose.dev.yml up -d --force-recreate coolify
 
-            Write-Host "✅ Done. Coolify updated!"
+            echo ✅ Done. Coolify updated!
