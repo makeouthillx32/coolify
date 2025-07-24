@@ -1,0 +1,22 @@
+--- START Thu 07/24/2025  9:26:27.02 --- 
+Pulling latest image... 
+invalid interpolation format for jobs.build-and-deploy.steps.[].with.username.
+You may need to escape any $ with another $.
+${{ github.actor }}
+Recreating container... 
+invalid interpolation format for jobs.build-and-deploy.steps.[].with.username.
+You may need to escape any $ with another $.
+${{ github.actor }}
+Done. Coolify updated. 
+--- END Thu 07/24/2025  9:26:27.14 --- 
+--- START Thu 07/24/2025  9:26:52.20 --- 
+Pulling latest image... 
+invalid interpolation format for jobs.build-and-deploy.steps.[].with.password.
+You may need to escape any $ with another $.
+${{ secrets.GITHUB_TOKEN }}
+Recreating container... 
+invalid interpolation format for jobs.build-and-deploy.steps.[].with.username.
+You may need to escape any $ with another $.
+${{ github.actor }}
+Done. Coolify updated. 
+--- END Thu 07/24/2025  9:26:52.34 --- 
