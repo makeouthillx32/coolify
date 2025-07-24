@@ -47,7 +47,7 @@ jobs:
             ghcr.io/makeouthillx32/coolify:latest
             ghcr.io/makeouthillx32/coolify:${{ steps.version.outputs.VERSION }}
 
-      - name: Deploy to Personal Server
+      - name: Deploy to Local Machine
         if: github.ref == 'refs/heads/v4.x'
         uses: appleboy/ssh-action@v0.1.5
         with:
@@ -59,4 +59,4 @@ jobs:
             cd D:\code\coolify
             docker-compose -f docker-compose.dev.yml pull coolify
             docker-compose -f docker-compose.dev.yml up -d --force-recreate coolify
-            echo "🎉 Deployment complete! Access at https://cool.unenter.live"ss
+            echo "🎉 Local Coolify updated with latest GitHub code!"
