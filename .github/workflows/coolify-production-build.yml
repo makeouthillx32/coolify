@@ -55,8 +55,9 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
+          envs: GHCR_TOKEN
           script: |
-            cd D:\code\coolify
-            docker login ghcr.io -u makeouthillx32 -p ${{ secrets.GHCR_TOKEN }}
-            docker-compose -f docker-compose.dev.yml pull coolify
-            docker-compose -f docker-compose.dev.yml up -d --force-recreate coolify
+            set GHCR_TOKEN=${{ secrets.GHCR_TOKEN }}
+            D:\code\coolify\update-coolify.bat
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
