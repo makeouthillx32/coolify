@@ -1,4 +1,7 @@
 @echo off
+echo 📁 Entering Coolify directory...
+cd /d "D:\code\coolify"
+
 echo 📥 Pulling latest image...
 docker-compose -f docker-compose.dev.yml pull coolify
 
