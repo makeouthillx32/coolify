@@ -16,7 +16,7 @@ on:
 
 env:
   GITHUB_REGISTRY: ghcr.io
-  IMAGE_NAME: "makeouthillx32/coolify"
+  IMAGE_NAME: "makeouthillx32/coolify"  # Your username/repo
 
 jobs:
   build-and-deploy:
@@ -55,18 +55,8 @@ jobs:
           username: ${{ secrets.SERVER_USERNAME }}
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
-          script_stop: true
           script: |
-            echo 📁 Switching to project directory...
-            cd /d "D:\code\coolify"
-
-            echo 🔐 Logging into GHCR...
+            cd D:\code\coolify
             docker login ghcr.io -u makeouthillx32 -p ${{ secrets.GHCR_TOKEN }}
-
-            echo 📥 Pulling updated image...
             docker-compose -f docker-compose.dev.yml pull coolify
-
-            echo 🔁 Recreating container...
             docker-compose -f docker-compose.dev.yml up -d --force-recreate coolify
-
-            echo ✅ Done. Coolify updated!
