@@ -19,7 +19,7 @@ env:
   IMAGE_NAME: "makeouthillx32/coolify"
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -46,20 +46,10 @@ jobs:
             ghcr.io/makeouthillx32/coolify:latest
             ghcr.io/makeouthillx32/coolify:${{ steps.version.outputs.VERSION }}
 
-      - name: Deploy to Local Machine
-        if: github.ref == 'refs/heads/v4.x'
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          port: 22
-          script_stop: true
-          script: |
-            D:
-            cd \code\coolify
-            echo Pulling latest image with content trust disabled...
-            docker pull ghcr.io/makeouthillx32/coolify:latest --disable-content-trust
-            echo Recreating container...
-            docker-compose -f docker-compose.dev.yml up -d --force-recreate coolify
-            echo Done!
+      - name: Build Complete
+        run: |
+          echo "🎉 Docker image built and pushed successfully!"
+          echo "📦 Image: ghcr.io/makeouthillx32/coolify:latest"
+          echo "💻 To update your local Coolify, run these commands:"
+          echo "   docker pull ghcr.io/makeouthillx32/coolify:latest --disable-content-trust"
+          echo "   docker-compose -f docker-compose.dev.yml up -d --force-recreate coolify"
