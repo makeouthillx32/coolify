@@ -27,6 +27,7 @@ services:
   postgres:
     image: postgres:15-alpine
     pull_policy: always
+    container_name: postgres  # Match .env DB_HOST=postgres
     ports:
       - "5433:5432"
     env_file:
@@ -44,6 +45,7 @@ services:
   redis:
     image: redis:7-alpine
     pull_policy: always
+    container_name: redis  # Match .env REDIS_HOST=redis
     ports:
       - "6380:6379"
     env_file:
