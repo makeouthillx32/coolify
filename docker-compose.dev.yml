@@ -1,29 +1,26 @@
 services:
   coolify:
-    build:
-      context: https://github.com/makeouthillx32/coolify.git#v4.x
-      dockerfile: ./docker/development/Dockerfile
-      args:
-        - USER_ID=${USERID:-1000}
-        - GROUP_ID=${GROUPID:-1000}
+    image: ghcr.io/makeouthillx32/coolify:latest
+    pull_policy: always
     ports:
       - "${APP_PORT:-8002}:8080"
+    env_file:
+      - .env
     environment:
-      AUTORUN_ENABLED: false
-      PHP_OPCACHE_ENABLE: 1
-      PUSHER_HOST: "${PUSHER_HOST}"
-      PUSHER_PORT: "${PUSHER_PORT}"
-      PUSHER_SCHEME: "${PUSHER_SCHEME:-http}"
-      PUSHER_APP_ID: "${PUSHER_APP_ID:-coolify}"
-      PUSHER_APP_KEY: "${PUSHER_APP_KEY:-coolify}"
-      PUSHER_APP_SECRET: "${PUSHER_APP_SECRET:-coolify}"
-      # Force the database and Redis settings
+      # Override any hardcoded values in the production image
       DB_HOST: "coolify-db"
       DB_DATABASE: "${DB_DATABASE}"
       DB_USERNAME: "${DB_USERNAME}"
       DB_PASSWORD: "${DB_PASSWORD}"
+      DB_PORT: "5432"
       REDIS_HOST: "coolify-redis"
+      REDIS_PORT: "6379"
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      REDIS_URL: "redis://default:${REDIS_PASSWORD}@coolify-redis:6379"
+      # Laravel config that might be hardcoded
+      CACHE_DRIVER: "redis"
+      SESSION_DRIVER: "redis"
+      QUEUE_CONNECTION: "redis"
     volumes:
       - dev_coolify_data:/data/coolify
       - dev_backups_data:/var/www/html/storage/app/backups
