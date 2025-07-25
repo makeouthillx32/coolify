@@ -1,112 +1,149 @@
-name: Production Build (v4)
+services:
+  coolify:
+    image: ghcr.io/makeouthillx32/coolify:latest
+    pull_policy: always
+    ports:
+      - "${APP_PORT:-8002}:8080"
+    environment:
+      AUTORUN_ENABLED: false
+      PHP_OPCACHE_ENABLE: 1
+      PUSHER_HOST: "${PUSHER_HOST}"
+      PUSHER_PORT: "${PUSHER_PORT}"
+      PUSHER_SCHEME: "${PUSHER_SCHEME:-http}"
+      PUSHER_APP_ID: "${PUSHER_APP_ID:-coolify}"
+      PUSHER_APP_KEY: "${PUSHER_APP_KEY:-coolify}"
+      PUSHER_APP_SECRET: "${PUSHER_APP_SECRET:-coolify}"
+    volumes:
+      - dev_coolify_data:/data/coolify
+      - dev_backups_data:/var/www/html/storage/app/backups
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - coolify
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
 
-on:
-  push:
-    branches: ["v4.x"]
-    paths-ignore:
-      - .github/workflows/coolify-helper.yml
-      - .github/workflows/coolify-helper-next.yml
-      - .github/workflows/coolify-realtime.yml
-      - .github/workflows/coolify-realtime-next.yml
-      - docker/coolify-helper/Dockerfile
-      - docker/coolify-realtime/Dockerfile
-      - docker/testing-host/Dockerfile
-      - templates/**
-      - CHANGELOG.md
+  postgres:
+    image: postgres:15-alpine
+    pull_policy: always
+    ports:
+      - "5433:5432"  # Your preferred external port
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: "${DB_USERNAME:-coolify}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD:-password}"
+      POSTGRES_DB: "${DB_DATABASE:-coolify}"
+    volumes:
+      - dev_postgres_data:/var/lib/postgresql/data
+    networks:
+      - coolify
+    restart: unless-stopped
 
-env:
-  GITHUB_REGISTRY: ghcr.io
-  IMAGE_NAME: "makeouthillx32/coolify"  # Your username/repo
+  redis:
+    image: redis:7-alpine
+    pull_policy: always
+    ports:
+      - "6380:6379"  # Your preferred external port
+    env_file:
+      - .env
+    # Fixed the dash character issue
+    command: redis-server --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - dev_redis_data:/data
+    networks:
+      - coolify
+    restart: unless-stopped
 
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  soketi:
+    # Use your personal registry for consistency
+    image: ghcr.io/makeouthillx32/coolify-realtime:latest
+    pull_policy: always
+    env_file:
+      - .env
+    ports:
+      - "6002:6001"  # Maps to your preferred 6002 port
+      - "6003:6002"  # Terminal server port
+    environment:
+      SOKETI_DEBUG: "false"
+      SOKETI_DEFAULT_APP_ID: "${PUSHER_APP_ID:-coolify}"
+      SOKETI_DEFAULT_APP_KEY: "${PUSHER_APP_KEY:-coolify}"
+      SOKETI_DEFAULT_APP_SECRET: "${PUSHER_APP_SECRET:-coolify}"
+    networks:
+      - coolify
+    restart: unless-stopped
 
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
+  vite:
+    image: node:20-alpine
+    pull_policy: always
+    working_dir: /var/www/html
+    environment:
+      VITE_HOST: "${VITE_HOST:-localhost}"
+      VITE_PORT: "${VITE_PORT:-5173}"
+    ports:
+      - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
+    volumes:
+      - .:/var/www/html/:cached
+    command: sh -c "npm install && npm run dev"
+    networks:
+      - coolify
+    restart: unless-stopped
 
-      - name: Get Version
-        id: version
-        run: |
-          echo "VERSION=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+  testing-host:
+    # Use your personal registry for consistency
+    image: ghcr.io/makeouthillx32/coolify-testing-host:latest
+    pull_policy: always
+    init: true
+    container_name: coolify-testing-host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - dev_coolify_data:/data/coolify
+      - dev_backups_data:/data/coolify/backups
+      - dev_postgres_data:/data/coolify/_volumes/database
+      - dev_redis_data:/data/coolify/_volumes/redis
+      - dev_minio_data:/data/coolify/_volumes/minio
+    networks:
+      - coolify
+    restart: unless-stopped
 
-      - name: Build and Push Image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/production/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/makeouthillx32/coolify:latest
-            ghcr.io/makeouthillx32/coolify:${{ steps.version.outputs.VERSION }}
+  mailpit:
+    image: axllent/mailpit:latest
+    pull_policy: always
+    container_name: coolify-mail
+    ports:
+      - "1026:1025"    # Your preferred external port
+      - "8026:8025"    # Your preferred external port
+    networks:
+      - coolify
+    restart: unless-stopped
 
-name: Production Build (v4)
+  minio:
+    image: minio/minio:latest
+    pull_policy: always
+    container_name: coolify-minio
+    # Fixed the dash character issue
+    command: server /data --console-address ":9001"
+    ports:
+      - "9001:9000"    # Your preferred external port
+      - "9002:9001"    # Your preferred external port
+    environment:
+      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY:-minioadmin}"
+      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY:-minioadmin}"
+    volumes:
+      - dev_minio_data:/data
+    networks:
+      - coolify
+    restart: unless-stopped
 
-on:
-  push:
-    branches: ["v4.x"]
-    paths-ignore:
-      - .github/workflows/coolify-helper.yml
-      - .github/workflows/coolify-helper-next.yml
-      - .github/workflows/coolify-realtime.yml
-      - .github/workflows/coolify-realtime-next.yml
-      - docker/coolify-helper/Dockerfile
-      - docker/coolify-realtime/Dockerfile
-      - docker/testing-host/Dockerfile
-      - templates/**
-      - CHANGELOG.md
+volumes:
+  dev_backups_data:
+  dev_postgres_data:
+  dev_redis_data:
+  dev_coolify_data:
+  dev_minio_data:
 
-env:
-  GITHUB_REGISTRY: ghcr.io
-  IMAGE_NAME: "makeouthillx32/coolify"
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GHCR_TOKEN }}
-
-      - name: Get Version
-        id: version
-        run: echo "VERSION=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
-
-      - name: Build and Push Image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: docker/production/Dockerfile
-          platforms: linux/amd64
-          push: true
-          tags: |
-            ghcr.io/makeouthillx32/coolify:latest
-            ghcr.io/makeouthillx32/coolify:${{ steps.version.outputs.VERSION }}
-
-      - name: Deploy to Local Machine
-        if: github.ref == 'refs/heads/v4.x'
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USERNAME }}
-          password: ${{ secrets.SERVER_PASSWORD }}
-          port: 22
-          envs: GHCR_TOKEN
-          script_stop: true
-          script: |
-            set GHCR_TOKEN=${{ secrets.GHCR_TOKEN }}
-            D:\code\coolify\update-coolify.bat
-        env:
-          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+networks:
+  coolify:
+    name: coolify
+    external: false
