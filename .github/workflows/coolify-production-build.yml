@@ -16,6 +16,55 @@ on:
 
 env:
   GITHUB_REGISTRY: ghcr.io
+  IMAGE_NAME: "makeouthillx32/coolify"  # Your username/repo
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Get Version
+        id: version
+        run: |
+          echo "VERSION=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: docker/production/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ghcr.io/makeouthillx32/coolify:latest
+            ghcr.io/makeouthillx32/coolify:${{ steps.version.outputs.VERSION }}
+
+name: Production Build (v4)
+
+on:
+  push:
+    branches: ["v4.x"]
+    paths-ignore:
+      - .github/workflows/coolify-helper.yml
+      - .github/workflows/coolify-helper-next.yml
+      - .github/workflows/coolify-realtime.yml
+      - .github/workflows/coolify-realtime-next.yml
+      - docker/coolify-helper/Dockerfile
+      - docker/coolify-realtime/Dockerfile
+      - docker/testing-host/Dockerfile
+      - templates/**
+      - CHANGELOG.md
+
+env:
+  GITHUB_REGISTRY: ghcr.io
   IMAGE_NAME: "makeouthillx32/coolify"
 
 jobs:
@@ -47,6 +96,7 @@ jobs:
             ghcr.io/makeouthillx32/coolify:${{ steps.version.outputs.VERSION }}
 
       - name: Deploy to Local Machine
+        if: github.ref == 'refs/heads/v4.x'
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -55,5 +105,10 @@ jobs:
           port: 22
           script_stop: true
           script: |
-            cd /d "D:\code\coolify"
-            update-coolify.bat
+            D:
+            cd \code\coolify
+            echo Pulling latest image with content trust disabled...
+            docker pull ghcr.io/makeouthillx32/coolify:latest --disable-content-trust
+            echo Recreating container...
+            docker-compose -f docker-compose.dev.yml up -d --force-recreate coolify
+            echo Done!
