@@ -19,7 +19,7 @@ env:
   IMAGE_NAME: "makeouthillx32/coolify"
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -55,6 +55,12 @@ jobs:
           password: ${{ secrets.SERVER_PASSWORD }}
           port: 22
           timeout: 60s
-          command_timeout: 300s
+          command_timeout: 10m
           script: |
-            cmd /c "cd /d D:\code\coolify && docker pull ghcr.io/makeouthillx32/coolify:latest --disable-content-trust && docker-compose -f docker-compose.dev.yml stop coolify && docker-compose -f docker-compose.dev.yml rm -f coolify && docker-compose -f docker-compose.dev.yml up -d coolify"
+            cd /d D:\code\coolify && docker pull ghcr.io/makeouthillx32/coolify:latest && docker-compose -f docker-compose.dev.yml down && docker-compose -f docker-compose.dev.yml up -d --pull never
+
+      - name: Build Complete
+        run: |
+          echo "🎉 Docker image built and deployed successfully!"
+          echo "📦 Image: ghcr.io/makeouthillx32/coolify:latest"
+          echo "🚀 Deployed to your local development machine"
