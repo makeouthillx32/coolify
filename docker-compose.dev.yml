@@ -27,15 +27,14 @@ services:
   postgres:
     image: postgres:15-alpine
     pull_policy: always
-    container_name: coolify-db  # Match production image expectations
+    container_name: coolify-db
     ports:
       - "5433:5432"
-    env_file:
-      - .env
     environment:
       POSTGRES_USER: "${DB_USERNAME:-coolify}"
       POSTGRES_PASSWORD: "${DB_PASSWORD:-password}"
       POSTGRES_DB: "${DB_DATABASE:-coolify}"
+      POSTGRES_HOST_AUTH_METHOD: "md5"
     volumes:
       - dev_postgres_data:/var/lib/postgresql/data
     networks:
@@ -45,12 +44,12 @@ services:
   redis:
     image: redis:7-alpine
     pull_policy: always
-    container_name: coolify-redis  # Match production image expectations
+    container_name: coolify-redis
     ports:
       - "6380:6379"
-    env_file:
-      - .env
-    command: redis-server --requirepass ${REDIS_PASSWORD:-}
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
     volumes:
       - dev_redis_data:/data
     networks:
