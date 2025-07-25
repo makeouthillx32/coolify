@@ -57,4 +57,4 @@ jobs:
           timeout: 60s
           command_timeout: 300s
           script: |
-            cmd /c "cd /d D:\code\coolify && docker pull ghcr.io/makeouthillx32/coolify:latest --disable-content-trust && docker-compose -f docker-compose.dev.yml up -d --force-recreate coolify"
+            cmd /c "cd /d D:\code\coolify && docker pull ghcr.io/makeouthillx32/coolify:latest --disable-content-trust && docker-compose -f docker-compose.dev.yml stop coolify && docker-compose -f docker-compose.dev.yml rm -f coolify && docker-compose -f docker-compose.dev.yml up -d coolify"
