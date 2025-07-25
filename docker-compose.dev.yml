@@ -8,7 +8,11 @@ services:
       - .env
     environment:
       # Override the baked-in APP_URL from the production image
-      APP_URL: "http://192.168.50.194:8002"
+      APP_URL: "https://cool.unenter.live"
+      # Sanctum stateful domains for API authentication  
+      SANCTUM_STATEFUL_DOMAINS: "cool.unenter.live,localhost,127.0.0.1,192.168.50.194"
+      # Allow requests from any proxy
+      TRUSTED_PROXIES: "*"
       # Database and Redis settings
       DB_HOST: "coolify-db"
       DB_DATABASE: "${DB_DATABASE}"
