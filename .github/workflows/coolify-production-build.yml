@@ -1,4 +1,4 @@
-name: Production Build (v4)
+name: Production Build (v2)
 
 on:
   push:
