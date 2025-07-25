@@ -7,7 +7,9 @@ services:
     env_file:
       - .env
     environment:
-      # Override any hardcoded values in the production image
+      # Override the baked-in APP_URL from the production image
+      APP_URL: "http://192.168.50.194:8002"
+      # Database and Redis settings
       DB_HOST: "coolify-db"
       DB_DATABASE: "${DB_DATABASE}"
       DB_USERNAME: "${DB_USERNAME}"
