@@ -5,7 +5,7 @@ info:
 servers:
   -
     url: 'https://app.coolify.io/api/v1'
-    description: 'Coolify Cloud API. Change the host to your own instance if you are self-hosting.'
+    description: 'Coolify Cloud API. Changes the host to your own instance if you are self-hosting.'
 paths:
   /applications:
     get:
