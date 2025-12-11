@@ -19,7 +19,8 @@ services:
       COOLIFY_STORAGE_TYPE: "local"
     volumes:
       - dev_coolify_data:/data/coolify
-      - '\\\\.\\pipe\\docker_engine:/var/run/docker.sock'
+      # CORRECTED FIX: Use the Linux socket path for Docker Desktop compatibility
+      - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - coolify
     depends_on:
