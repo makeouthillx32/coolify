@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  coolify:
+    # Use the image you build and push
+    image: ghcr.io/makeouthillx32/coolify:latest
+    pull_policy: always
+    container_name: coolify
+    ports:
+      - "8000:8080"
+    environment:
+      # Use your custom domain
+      APP_URL: "https://cool.unenter.live"
+      SANCTUM_STATEFUL_DOMAINS: "cool.unenter.live,localhost,127.0.0.1,192.168.50.194"
+      TRUSTED_PROXIES: "*"
+      # References to variables we will define in the Portainer UI:
+      DB_HOST: "coolify-db"
+      DB_DATABASE: "${DB_DATABASE}"
+      DB_USERNAME: "${DB_USERNAME}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      REDIS_HOST: "coolify-redis"
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      COOLIFY_STORAGE_TYPE: "local"
+    volumes:
+      # Use the existing volume name from your previous setup
+      - dev_coolify_data:/data/coolify
+      # CRITICAL WINDOWS FIX (for your LDV3 environment)
+      - '\\.\pipe\docker_engine':C:\var\run\docker.sock 
+    networks:
+      - coolify
+    depends_on:
+      - postgres
+      - redis
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    pull_policy: always
+    container_name: coolify-db
+    ports:
+      - "5432:5432"
+    environment:
+      # References to variables we will define in the Portainer UI:
+      POSTGRES_USER: "${DB_USERNAME}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+      POSTGRES_DB: "${DB_DATABASE}"
+    volumes:
+      - dev_postgres_data:/var/lib/postgresql/data
+    networks:
+      - coolify
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    pull_policy: always
+    container_name: coolify-redis
+    ports:
+      - "6379:6379"
+    environment:
+      # References to variables we will define in the Portainer UI:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - dev_redis_data:/data
+    networks:
+      - coolify
+    restart: unless-stopped
+
+volumes:
+  # Reference the old volumes to keep your data
+  dev_postgres_data:
+  dev_redis_data:
+  dev_coolify_data:
+
+networks:
+  coolify:
+    name: coolify
+    external: false
