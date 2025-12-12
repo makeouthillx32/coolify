@@ -4,7 +4,9 @@ services:
     pull_policy: always
     ports:
       - "${APP_PORT:-8002}:8080"
-    # DELETED: env_file: - .env (Variables are now read directly from Portainer UI)
+    # ✅ FIX 1: Add Initialization Command (Required for Coolify to start correctly)
+    command: sh -c "php artisan config:clear && php artisan coolify:server:add-localhost-key && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
+    # DELETED: env_file: - .env (Fixes the "env file not found" deployment error)
     environment:
       # Override the baked-in APP_URL from the production image
       APP_URL: "https://cool.unenter.live"
@@ -70,11 +72,8 @@ services:
     restart: unless-stopped
 
   soketi:
-    # BUILD LOCALLY instead of trying to pull non-existent image
-    build:
-      context: .
-      dockerfile: ./docker/coolify-realtime/Dockerfile
-    # DELETED: env_file: - .env (Variables are now read directly from Portainer UI)
+    # ✅ FIX 2: Replaced 'build' with 'image' to bypass the HTTP/2 build error
+    image: quay.io/soketi/soketi:latest-16-alpine 
     ports:
       - "6002:6001"
       - "6003:6002"
@@ -104,10 +103,8 @@ services:
     restart: unless-stopped
 
   testing-host:
-    # BUILD LOCALLY instead of trying to pull non-existent image
-    build:
-      context: .
-      dockerfile: ./docker/testing-host/Dockerfile
+    # ✅ FIX 3: Replaced 'build' with 'image' to bypass the HTTP/2 build error
+    image: coollabsio/testing-host:latest
     init: true
     container_name: coolify-testing-host
     volumes:
