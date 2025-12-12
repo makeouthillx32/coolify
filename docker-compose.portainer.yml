@@ -118,9 +118,10 @@ services:
     pull_policy: always
     container_name: coolify-minio
     command: server /data --console-address ":9001"
+    # ✅ FIX: Changed MinIO host ports to 9003 and 9004 to avoid conflict with Portainer Agent (9001).
     ports:
-      - "9001:9000"
-      - "9002:9001"
+      - "9003:9000"
+      - "9004:9001"
     environment:
       MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY:-minioadmin}"
       MINIO_SECRET_KEY: "${MINIO_SECRET_KEY:-minioadmin}"
