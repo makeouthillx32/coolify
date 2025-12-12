@@ -90,7 +90,7 @@ services:
       - coolify
     restart: unless-stopped
   testing-host:
-    image: coollabsio/testing-host:latest
+    image: ghcr.io/coollabsio/coolify-testing-host:latest
     init: true
     container_name: coolify-testing-host
     volumes:
