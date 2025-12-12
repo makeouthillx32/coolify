@@ -4,17 +4,13 @@ services:
     pull_policy: always
     ports:
       - "${APP_PORT:-8002}:8080"
-    # ✅ FIX 1: Add Initialization Command (Required for Coolify to start correctly)
     command: sh -c "php artisan config:clear && php artisan coolify:server:add-localhost-key && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
-    # DELETED: env_file: - .env (Fixes the "env file not found" deployment error)
+    env_file:
+      - .env
     environment:
-      # Override the baked-in APP_URL from the production image
       APP_URL: "https://cool.unenter.live"
-      # Sanctum stateful domains for API authentication  
       SANCTUM_STATEFUL_DOMAINS: "cool.unenter.live,localhost,127.0.0.1,192.168.50.194"
-      # Allow requests from any proxy
       TRUSTED_PROXIES: "*"
-      # Database and Redis settings
       DB_HOST: "coolify-db"
       DB_DATABASE: "${DB_DATABASE}"
       DB_USERNAME: "${DB_USERNAME}"
@@ -24,7 +20,6 @@ services:
       REDIS_PORT: "6379"
       REDIS_PASSWORD: "${REDIS_PASSWORD}"
       REDIS_URL: "redis://default:${REDIS_PASSWORD}@coolify-redis:6379"
-      # Laravel config that might be hardcoded
       CACHE_DRIVER: "redis"
       SESSION_DRIVER: "redis"
       QUEUE_CONNECTION: "redis"
@@ -38,7 +33,6 @@ services:
       - postgres
       - redis
     restart: unless-stopped
-
   postgres:
     image: postgres:15-alpine
     pull_policy: always
@@ -55,7 +49,6 @@ services:
     networks:
       - coolify
     restart: unless-stopped
-
   redis:
     image: redis:7-alpine
     pull_policy: always
@@ -70,10 +63,8 @@ services:
     networks:
       - coolify
     restart: unless-stopped
-
   soketi:
-    # ✅ FIX 2: Replaced 'build' with 'image' to bypass the HTTP/2 build error
-    image: quay.io/soketi/soketi:latest-16-alpine 
+    image: quay.io/soketi/soketi:latest-16-alpine
     ports:
       - "6002:6001"
       - "6003:6002"
@@ -85,7 +76,6 @@ services:
     networks:
       - coolify
     restart: unless-stopped
-
   vite:
     image: node:20-alpine
     pull_policy: always
@@ -101,9 +91,7 @@ services:
     networks:
       - coolify
     restart: unless-stopped
-
   testing-host:
-    # ✅ FIX 3: Replaced 'build' with 'image' to bypass the HTTP/2 build error
     image: coollabsio/testing-host:latest
     init: true
     container_name: coolify-testing-host
@@ -117,7 +105,6 @@ services:
     networks:
       - coolify
     restart: unless-stopped
-
   mailpit:
     image: axllent/mailpit:latest
     pull_policy: always
@@ -128,7 +115,6 @@ services:
     networks:
       - coolify
     restart: unless-stopped
-
   minio:
     image: minio/minio:latest
     pull_policy: always
@@ -145,14 +131,12 @@ services:
     networks:
       - coolify
     restart: unless-stopped
-
 volumes:
   dev_backups_data:
   dev_postgres_data:
   dev_redis_data:
   dev_coolify_data:
   dev_minio_data:
-
 networks:
   coolify:
     name: coolify
