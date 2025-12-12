@@ -4,13 +4,12 @@ services:
     pull_policy: always
     ports:
       - "${APP_PORT:-8002}:8080"
-    # ✅ FIX: Corrected typo from /us/bin/supervisord to /usr/bin/supervisord
-    command: sh -c "php artisan config:clear && php artisan coolify:server:add-localhost-key && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
+    # ✅ FIX: Minimalist command to start the core web process, removing all custom scripts that were failing.
+    command: /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
     environment:
       APP_URL: "https://cool.unenter.live"
       SANCTUM_STATEFUL_DOMAINS: "cool.unenter.live,localhost,127.0.0.1,192.168.50.194"
       TRUSTED_PROXIES: "*"
-      # 🚨 Ensure APP_KEY is set as an environment variable in your deployment UI!
       APP_KEY: "${APP_KEY}" 
       DB_HOST: "coolify-db"
       DB_DATABASE: "${DB_DATABASE}"
