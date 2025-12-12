@@ -5,8 +5,6 @@ services:
     ports:
       - "${APP_PORT:-8002}:8080"
     command: sh -c "php artisan config:clear && php artisan coolify:server:add-localhost-key && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
-    env_file:
-      - .env
     environment:
       APP_URL: "https://cool.unenter.live"
       SANCTUM_STATEFUL_DOMAINS: "cool.unenter.live,localhost,127.0.0.1,192.168.50.194"
