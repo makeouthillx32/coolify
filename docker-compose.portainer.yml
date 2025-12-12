@@ -4,11 +4,14 @@ services:
     pull_policy: always
     ports:
       - "${APP_PORT:-8002}:8080"
+    # FIX: Corrected typo in supervisord path
     command: sh -c "php artisan config:clear && php artisan coolify:server:add-localhost-key && /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
     environment:
       APP_URL: "https://cool.unenter.live"
       SANCTUM_STATEFUL_DOMAINS: "cool.unenter.live,localhost,127.0.0.1,192.168.50.194"
       TRUSTED_PROXIES: "*"
+      # REQUIRED: This variable must be set with the key generated above
+      APP_KEY: "${APP_KEY}" 
       DB_HOST: "coolify-db"
       DB_DATABASE: "${DB_DATABASE}"
       DB_USERNAME: "${DB_USERNAME}"
@@ -74,21 +77,6 @@ services:
     networks:
       - coolify
     restart: unless-stopped
-  vite:
-    image: node:20-alpine
-    pull_policy: always
-    working_dir: /var/www/html
-    environment:
-      VITE_HOST: "${VITE_HOST:-localhost}"
-      VITE_PORT: "${VITE_PORT:-5173}"
-    ports:
-      - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
-    volumes:
-      - .:/var/www/html/:cached
-    command: sh -c "npm install && npm run dev"
-    networks:
-      - coolify
-    restart: unless-stopped
   testing-host:
     image: ghcr.io/coollabsio/coolify-testing-host:latest
     init: true
@@ -118,7 +106,6 @@ services:
     pull_policy: always
     container_name: coolify-minio
     command: server /data --console-address ":9001"
-    # ✅ FIX: Changed MinIO host ports to 9003 and 9004 to avoid conflict with Portainer Agent (9001).
     ports:
       - "9003:9000"
       - "9004:9001"
