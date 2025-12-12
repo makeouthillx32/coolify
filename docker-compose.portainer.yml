@@ -1,15 +1,17 @@
 services:
   coolify:
-    image: ghcr.io/makeouthillx32/coolify:latest
+    # ✅ FIX: Switched to the official, stable Coolify image
+    image: ghcr.io/coollabsio/coolify:latest
     pull_policy: always
     ports:
       - "${APP_PORT:-8002}:8080"
-    # ✅ FIX: Minimalist command to start the core web process, removing all custom scripts that were failing.
-    command: /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
+    # ✅ FIX: Removed the failing 'command:' override. The official image's ENTRYPOINT will now run automatically.
+    
     environment:
       APP_URL: "https://cool.unenter.live"
       SANCTUM_STATEFUL_DOMAINS: "cool.unenter.live,localhost,127.0.0.1,192.168.50.194"
       TRUSTED_PROXIES: "*"
+      # You confirmed this is set in your environment, which is correct.
       APP_KEY: "${APP_KEY}" 
       DB_HOST: "coolify-db"
       DB_DATABASE: "${DB_DATABASE}"
