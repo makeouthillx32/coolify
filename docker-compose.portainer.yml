@@ -1,17 +1,14 @@
 services:
   coolify:
-    # ✅ FIX: Switched to the official, stable Coolify image
     image: ghcr.io/coollabsio/coolify:latest
     pull_policy: always
+    container_name: coolify
     ports:
       - "${APP_PORT:-8002}:8080"
-    # ✅ FIX: Removed the failing 'command:' override. The official image's ENTRYPOINT will now run automatically.
-    
     environment:
       APP_URL: "https://cool.unenter.live"
       SANCTUM_STATEFUL_DOMAINS: "cool.unenter.live,localhost,127.0.0.1,192.168.50.194"
       TRUSTED_PROXIES: "*"
-      # You confirmed this is set in your environment, which is correct.
       APP_KEY: "${APP_KEY}" 
       DB_HOST: "coolify-db"
       DB_DATABASE: "${DB_DATABASE}"
@@ -35,6 +32,7 @@ services:
       - postgres
       - redis
     restart: unless-stopped
+
   postgres:
     image: postgres:15-alpine
     pull_policy: always
@@ -51,6 +49,12 @@ services:
     networks:
       - coolify
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-coolify}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   redis:
     image: redis:7-alpine
     pull_policy: always
@@ -65,8 +69,16 @@ services:
     networks:
       - coolify
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   soketi:
     image: quay.io/soketi/soketi:latest-16-alpine
+    pull_policy: always
+    container_name: coolify-soketi
     ports:
       - "6002:6001"
       - "6003:6002"
@@ -78,8 +90,30 @@ services:
     networks:
       - coolify
     restart: unless-stopped
+
+  # ✅ ADDED: Sentinel for metrics and monitoring
+  sentinel:
+    image: ghcr.io/coollabsio/sentinel:latest
+    pull_policy: always
+    container_name: coolify-sentinel
+    ports:
+      - "8888:8888"
+    environment:
+      SENTINEL_METRICS_HISTORY_DAYS: "7"
+    volumes:
+      - dev_sentinel_data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /:/host:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    networks:
+      - coolify
+    restart: unless-stopped
+    privileged: true
+
   testing-host:
     image: ghcr.io/coollabsio/coolify-testing-host:latest
+    pull_policy: always
     init: true
     container_name: coolify-testing-host
     volumes:
@@ -92,6 +126,7 @@ services:
     networks:
       - coolify
     restart: unless-stopped
+
   mailpit:
     image: axllent/mailpit:latest
     pull_policy: always
@@ -102,6 +137,7 @@ services:
     networks:
       - coolify
     restart: unless-stopped
+
   minio:
     image: minio/minio:latest
     pull_policy: always
@@ -111,19 +147,27 @@ services:
       - "9003:9000"
       - "9004:9001"
     environment:
-      MINIO_ACCESS_KEY: "${MINIO_ACCESS_KEY:-minioadmin}"
-      MINIO_SECRET_KEY: "${MINIO_SECRET_KEY:-minioadmin}"
+      MINIO_ROOT_USER: "${MINIO_ACCESS_KEY:-minioadmin}"
+      MINIO_ROOT_PASSWORD: "${MINIO_SECRET_KEY:-minioadmin}"
     volumes:
       - dev_minio_data:/data
     networks:
       - coolify
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
 volumes:
   dev_backups_data:
   dev_postgres_data:
   dev_redis_data:
   dev_coolify_data:
   dev_minio_data:
+  dev_sentinel_data:
+
 networks:
   coolify:
     name: coolify
