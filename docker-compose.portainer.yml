@@ -3,6 +3,9 @@ services:
     image: ghcr.io/coollabsio/coolify:latest
     pull_policy: always
     container_name: coolify
+    working_dir: /var/www/html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "${APP_PORT:-8002}:8080"
     environment:
@@ -78,7 +81,9 @@ services:
   soketi:
     image: quay.io/soketi/soketi:latest-16-alpine
     pull_policy: always
-    container_name: coolify-soketi
+    container_name: coolify-realtime
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "6002:6001"
       - "6003:6002"
@@ -159,66 +164,6 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
-
-  # ✅ ADDED: Traefik reverse proxy for routing and SSL
-  traefik:
-    image: traefik:v3.1
-    pull_policy: always
-    container_name: coolify-proxy
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-      - "8080:8080"
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - dev_coolify_data:/data/coolify
-      - /data/coolify/proxy:/traefik
-    networks:
-      - coolify
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:80/ping"]
-      interval: 4s
-      timeout: 2s
-      retries: 5
-    command:
-      # Ping endpoint
-      - "--ping=true"
-      - "--ping.entrypoint=http"
-      # API and Dashboard
-      - "--api.dashboard=true"
-      - "--api.insecure=false"
-      # Entry points
-      - "--entrypoints.http.address=:80"
-      - "--entrypoints.https.address=:443"
-      - "--entrypoints.http.http.encodequerysemicolons=true"
-      - "--entryPoints.http.http2.maxConcurrentStreams=50"
-      - "--entrypoints.https.http.encodequerysemicolons=true"
-      - "--entryPoints.https.http2.maxConcurrentStreams=50"
-      - "--entrypoints.https.http3"
-      # Docker provider
-      - "--providers.docker.exposedbydefault=false"
-      - "--providers.docker.network=coolify"
-      # HTTP provider for dynamic configuration
-      - "--providers.http.endpoint=http://coolify:8080/api/v1/config/traefik"
-      - "--providers.http.pollInterval=2s"
-      # File provider for additional config
-      - "--providers.file.directory=/traefik/dynamic/"
-      - "--providers.file.watch=true"
-      # Certificate resolvers (Let's Encrypt)
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
-      - "--certificatesresolvers.letsencrypt.acme.storage=/traefik/acme.json"
-      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=http"
-      # Logging
-      - "--log.level=ERROR"
-      - "--accesslog=false"
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.traefik.entrypoints=http"
-      - "traefik.http.routers.traefik.service=api@internal"
 
 volumes:
   dev_backups_data:
