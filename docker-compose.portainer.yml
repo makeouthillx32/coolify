@@ -96,25 +96,6 @@ services:
       - coolify
     restart: unless-stopped
 
-  # ✅ ADDED: Sentinel for metrics and monitoring
-  sentinel:
-    image: ghcr.io/coollabsio/sentinel:latest
-    pull_policy: always
-    container_name: coolify-sentinel
-    ports:
-      - "8888:8888"
-    environment:
-      SENTINEL_METRICS_HISTORY_DAYS: "7"
-    volumes:
-      - dev_sentinel_data:/data
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /:/host:ro
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-    networks:
-      - coolify
-    restart: unless-stopped
-    privileged: true
 
   testing-host:
     image: ghcr.io/coollabsio/coolify-testing-host:latest
