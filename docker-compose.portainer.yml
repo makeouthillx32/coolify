@@ -1,21 +1,28 @@
 services:
+  coolify-testing-host:
+    image: "ghcr.io/coollabsio/coolify-testing-host:latest"
+    container_name: coolify-testing-host
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./:/data/coolify
+
   coolify:
-    image: ghcr.io/coollabsio/coolify:latest
+    image: "ghcr.io/coollabsio/coolify:latest"
     container_name: coolify
     restart: always
     environment:
+      - APP_ID=${APP_ID}
       - APP_KEY=${APP_KEY}
       - DB_PASSWORD=${DB_PASSWORD}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - DB_USERNAME=${DB_USERNAME}
       - IS_WINDOWS_DOCKER_DESKTOP=true
+      - APP_URL=https://cool.unenter.live
     ports:
       - "8002:8080"
     volumes:
       - dev_coolify_data:/data/coolify
       - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - coolify
     depends_on:
       postgres:
         condition: service_healthy
@@ -23,6 +30,7 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: coolify-db
+    restart: always
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_USER: ${DB_USERNAME}
@@ -31,8 +39,6 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME}"]
       interval: 5s
-    networks:
-      - coolify
 
   redis:
     image: redis:7-alpine
@@ -41,19 +47,14 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     volumes:
       - dev_redis_data:/data
-    networks:
-      - coolify
-
-networks:
-  coolify:
-    external: false
 
 volumes:
   dev_coolify_data:
     external: true
+    name: "coolify_dev_coolify_data"
   dev_postgres_data:
     external: true
+    name: "coolify_dev_postgres_data"
   dev_redis_data:
     external: true
-  dev_backups_data:
-    external: true
+    name: "coolify_dev_redis_data"
