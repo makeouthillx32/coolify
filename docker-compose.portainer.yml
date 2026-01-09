@@ -151,6 +151,10 @@ volumes:
   dev_redis_data:
     external: true
     name: "coolify_dev_redis_data"
+  dev_backups_data:
+    external: true
+    name: "coolify_dev_backups_data"
   dev_minio_data:
     external: true
     name: "coolify_dev_minio_data"
+
